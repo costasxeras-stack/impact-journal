@@ -1,0 +1,10 @@
+{
+  "name": "impact-journal",
+  "version": "0.1.0",
+  "description": "Log work wins with the result they had, see which skills your record is missing, and turn it into a self-review or CV bullets.",
+  "private": true,
+  "scripts": {
+    "serve": "python3 -m http.server 8000"
+  },
+  "license": "MIT"
+}
