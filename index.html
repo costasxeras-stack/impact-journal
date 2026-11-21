@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Impact Journal</title>
+<meta name="description" content="Log work wins with the result they had, see which skills your record is missing, and turn it into a self-review or CV bullets.">
+<meta name="theme-color" content="#2f5d50">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f5d50'/%3E%3Cpath d='M9 21l5-5 4 3 6-8' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600;7..72,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css?v=1">
+<style>
+:root{--accent:#2f5d50;--soft:#e6efeb}
+.entry{border-top:1px solid var(--line);padding:14px 0;display:grid;gap:5px}
+.entry:first-child{border-top:0}
+.entry h3{font:600 16px var(--body);display:flex;gap:8px;align-items:flex-start}
+.entry h3 .star{border:0;background:none;cursor:pointer;font-size:18px;line-height:1;color:var(--faint);padding:0}
+.entry h3 .star[aria-pressed="true"]{color:#c48a00}
+.entry .meta{font-size:13px;color:var(--faint);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.entry p{margin:0;color:var(--muted);font-size:14.5px}
+.entry .acts{display:flex;gap:8px;margin-top:4px}
+.month{font:600 12.5px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:18px 0 0}
+.filters{display:grid;grid-template-columns:1fr 170px 170px;gap:10px;margin-top:12px}
+.bars{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;align-items:end;height:150px;margin-top:16px}
+.bars .b{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11.5px;color:var(--faint);gap:4px}
+.bars .b i{display:block;width:100%;max-width:30px;background:var(--accent);border-radius:5px 5px 0 0;min-height:2px}
+.bars .b em{font-style:normal;color:var(--ink);font-weight:600;font-size:12px}
+.hbar{display:grid;grid-template-columns:130px 1fr 36px;gap:10px;align-items:center;font-size:14px;margin-top:8px}
+.hbar .t{height:12px;border-radius:6px;background:#eeebe5;overflow:hidden}
+.hbar .t i{display:block;height:100%;background:var(--accent)}
+.hbar.gap .t i{background:var(--warn)}
+.hbar .n{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.skills-pick{margin-top:6px}
+@media (max-width:700px){.filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}.two{grid-template-columns:1fr}}
+@media (max-width:600px){.hbar{grid-template-columns:100px 1fr 30px}.bars{gap:3px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="./"><i><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12l4-4 3 2 5-6" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Impact Journal</a>
+  <nav><a class="hide-sm" href="https://github.com/costasxeras-stack/impact-journal">GitHub</a><a href="https://kostasxeras.com/">Portfolio</a></nav>
+</div></header>
+<div class="tabs" role="tablist" aria-label="Sections"><div class="wrap">
+  <button role="tab" data-view="log" aria-selected="true">Journal</button>
+  <button role="tab" data-view="dash" aria-selected="false">Dashboard</button>
+  <button role="tab" data-view="review" aria-selected="false">Review builder</button>
+  <button role="tab" data-view="data" aria-selected="false">Data</button>
+</div></div>
+
+<main class="wrap">
+  <div class="banner" id="nudge" hidden><span id="nudge-t"></span><button class="btn small" type="button" id="nudge-go">Add an entry</button></div>
+  <div class="banner" id="sample-b" hidden><span>You are looking at example entries, not real ones.</span><button class="btn small" type="button" id="sample-clear">Remove examples</button></div>
+
+  <!-- JOURNAL -->
+  <section data-panel="log">
+    <div class="intro">
+      <h1>Write down the win and what it changed.</h1>
+      <p>A line a week is enough. At review time you get a record grouped by skill, with the gaps showing, instead of a blank page.</p>
+    </div>
+    <section class="card" aria-labelledby="add-h">
+      <h2 id="add-h">New entry</h2>
+      <form id="form" autocomplete="off">
+        <label for="title">What you did</label>
+        <input type="text" id="title" required maxlength="160" placeholder="Start with a verb: Led, Shipped, Cut, Ran…">
+        <label for="result">What changed because of it</label>
+        <textarea id="result" maxlength="700" placeholder="Who benefited, and how. Before and after if you can."></textarea>
+        <div class="grid3">
+          <div><label for="date">Date</label><input type="date" id="date" required></div>
+          <div><label for="type">Type</label><select id="type"></select></div>
+          <div><label for="scope">Reach</label><select id="scope"></select></div>
+        </div>
+        <label>Skills it shows <span class="opt">(pick any)</span></label>
+        <div class="chips skills-pick" id="skillpick"></div>
+        <div class="grid2">
+          <div><label for="metric">Number <span class="opt">(optional)</span></label><input type="text" id="metric" maxlength="80" placeholder="For example 12% fewer tickets"></div>
+          <div><label for="link">Link to proof <span class="opt">(optional)</span></label><input type="url" id="link" maxlength="300" placeholder="https://"></div>
+        </div>
+        <label for="fb">Feedback you got <span class="opt">(optional, in your words)</span></label>
+        <input type="text" id="fb" maxlength="240" placeholder="Who said what, roughly">
+        <div class="row"><button class="btn primary" type="submit" id="save">Save entry</button><button class="btn" type="button" id="cancel" hidden>Cancel edit</button></div>
+      </form>
+    </section>
+    <section class="card" aria-labelledby="list-h">
+      <h2 id="list-h">Your record <small id="count"></small></h2>
+      <div class="filters">
+        <input type="search" id="q" placeholder="Search" aria-label="Search entries">
+        <select id="fskill" aria-label="Filter by skill"><option value="">All skills</option></select>
+        <select id="fother" aria-label="Filter"><option value="">All entries</option><option value="star">Starred only</option><option value="nometric">Missing a number</option><option value="noresult">Missing a result</option></select>
+      </div>
+      <div id="list"></div>
+    </section>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section data-panel="dash" hidden>
+    <div class="intro"><h1>What your record says.</h1><p>Counts only. The point is to spot gaps early, while there is still time to fill them before the review.</p></div>
+    <div class="stats" id="stats"></div>
+    <section class="card"><h2>Entries per month <small>last 12 months</small></h2><div class="bars" id="months"></div></section>
+    <div class="two">
+      <section class="card"><h2>Skills <small>last 6 months</small></h2><p class="sub">Red: no entry in 6 months. A gap worth a plan, or a skill to drop from your story.</p><div id="skillbars"></div></section>
+      <section class="card"><h2>Reach <small>last 6 months</small></h2><p class="sub">Promotion cases usually need wins beyond your own team.</p><div id="scopebars"></div></section>
+    </div>
+    <section class="card"><h2>Record quality</h2><p class="sub">Entries with a result and a number make the strongest review evidence.</p><div id="quality"></div></section>
+  </section>
+
+  <!-- REVIEW -->
+  <section data-panel="review" hidden>
+    <div class="intro"><h1>Turn the record into a draft.</h1><p>Pick a period and a format. The draft uses your own words, grouped and ordered, ready to edit. Nothing is generated or sent anywhere.</p></div>
+    <section class="card">
+      <div class="grid3">
+        <div><label for="period">Period</label><select id="period"></select></div>
+        <div><label for="fmt">Format</label><select id="fmt"><option value="review">Self-review by skill</option><option value="type">Summary by type</option><option value="cv">CV bullets</option><option value="one">One-page brag document</option></select></div>
+        <div><label for="only">Include</label><select id="only"><option value="">All entries</option><option value="star">Starred only</option></select></div>
+      </div>
+      <pre class="out" id="draft" aria-live="polite"></pre>
+      <div class="row"><button class="btn primary" type="button" id="copy">Copy</button><button class="btn" type="button" id="dl">Download .md</button><span class="note" id="dcount" style="margin:0"></span></div>
+    </section>
+  </section>
+
+  <!-- DATA -->
+  <section data-panel="data" hidden>
+    <div class="intro"><h1>Your data, in your hands.</h1><p>Everything stays in this browser. Nothing is sent anywhere. Clearing your browser data deletes it, so keep a backup.</p></div>
+    <section class="card"><h2>Back up and move</h2>
+      <div class="row"><button class="btn primary" id="backup" type="button">Download backup (JSON)</button><label class="btn" style="margin:0">Restore a backup<input type="file" id="restore" accept="application/json" hidden></label><button class="btn" id="csv" type="button">Download as CSV</button></div>
+      <p class="note" id="lastbk"></p>
+    </section>
+    <section class="card"><h2>Skills you track</h2><p class="sub">One per line. Renaming a skill here does not change past entries.</p><textarea id="skills-edit" style="min-height:150px"></textarea><div class="row"><button class="btn" id="skills-save" type="button">Save skills</button></div></section>
+    <section class="card"><h2>Try it with examples</h2><p class="sub">Loads 14 made-up entries so you can see the dashboard and drafts. They are marked as examples and can be removed in one tap.</p><div class="row"><button class="btn" id="sample" type="button">Load example entries</button><button class="btn danger" id="wipe" type="button">Delete everything</button></div></section>
+  </section>
+</main>
+<footer><div class="wrap"><span>Impact Journal v0.1.0 by <a href="https://kostasxeras.com/">Konstantinos Xeras</a>, built with Claude (Anthropic). <a href="https://github.com/costasxeras-stack/impact-journal">Code and decisions on GitHub</a>.</span></div></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+  var KEY = 'impact-journal-v1', $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var TYPES = ['Delivery', 'Customer', 'Revenue or cost', 'Quality', 'Team', 'Learning', 'Recognition'];
+  var SCOPES = ['My team', 'Other teams', 'Whole company', 'Customers'];
+  var DEFAULT_SKILLS = ['Strategy', 'Discovery', 'Execution', 'Data', 'Stakeholders', 'Leadership', 'Communication'];
+  var S = load(), editing = null, pickSkills = [];
+
+  function load() {
+    try { var v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && Array.isArray(v.entries)) { v.skills = Array.isArray(v.skills) && v.skills.length ? v.skills : DEFAULT_SKILLS.slice(); return v; } } catch (e) {}
+    try { var old = JSON.parse(localStorage.getItem('kx-wins-v1') || 'null'); if (Array.isArray(old) && old.length) return { entries: old.map(function (w) { return { id: w.id, created: w.created, date: w.date, title: w.title, result: w.impact || '', metric: w.metric || '', link: w.link || '', type: TYPES.indexOf(w.tag) > -1 ? w.tag : 'Delivery', scope: 'My team', skills: [], fb: '', star: false }; }), skills: DEFAULT_SKILLS.slice() }; } catch (e) {}
+    return { entries: [], skills: DEFAULT_SKILLS.slice() };
+  }
+  function store() { try { localStorage.setItem(KEY, JSON.stringify(S)); return true; } catch (e) { toast('Could not save in this browser'); return false; } }
+  function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function () { el.classList.remove('on'); }, 2000); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function today() { return iso(new Date()); }
+  function daysAgo(n) { var d = new Date(); d.setDate(d.getDate() - n); return iso(d); }
+  function monthsAgo(n) { var d = new Date(); d.setMonth(d.getMonth() - n); return iso(d); }
+  function safeLink(u) { return /^https?:\/\//i.test(u || '') ? u : ''; }
+  function sorted(a) { return a.slice().sort(function (x, y) { return x.date < y.date ? 1 : x.date > y.date ? -1 : (y.created || 0) - (x.created || 0); }); }
+  function quarter(d) { return d.slice(0, 4) + ' Q' + Math.ceil(+d.slice(5, 7) / 3); }
+  function cap(s) { s = String(s || '').trim().replace(/[.\s]+$/, ''); return s.charAt(0).toUpperCase() + s.slice(1); }
+  function lower1(s) { s = String(s || '').trim().replace(/[.\s]+$/, ''); return s && s.charAt(1) !== s.charAt(1).toUpperCase() ? s.charAt(0).toLowerCase() + s.slice(1) : s; }
+  function opts(sel, list) { $(sel).innerHTML = list.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join(''); }
+
+  // Tabs
+  var views = Array.prototype.slice.call(document.querySelectorAll('[role=tab]'));
+  function show(v) {
+    views.forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-view') === v ? 'true' : 'false'); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-panel]'), function (p) { p.hidden = p.getAttribute('data-panel') !== v; });
+    if (v === 'dash') dash(); if (v === 'review') draft(); if (v === 'data') dataView();
+    try { history.replaceState(null, '', '#' + v); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  views.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-view')); }); });
+
+  // Form
+  opts('type', TYPES); opts('scope', SCOPES);
+  function drawPick() {
+    $('skillpick').innerHTML = S.skills.map(function (k) { return '<button type="button" class="chip" aria-pressed="' + (pickSkills.indexOf(k) > -1) + '">' + esc(k) + '</button>'; }).join('');
+    $('fskill').innerHTML = '<option value="">All skills</option>' + S.skills.map(function (k) { return '<option>' + esc(k) + '</option>'; }).join('');
+  }
+  $('skillpick').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return; var k = b.textContent, i = pickSkills.indexOf(k);
+    if (i > -1) pickSkills.splice(i, 1); else pickSkills.push(k); b.setAttribute('aria-pressed', i < 0);
+  });
+  function reset() { editing = null; pickSkills = []; $('form').reset(); $('date').value = today(); $('save').textContent = 'Save entry'; $('cancel').hidden = true; drawPick(); }
+  $('cancel').addEventListener('click', reset);
+  $('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var w = { date: $('date').value || today(), type: $('type').value, scope: $('scope').value, title: $('title').value.trim().slice(0, 160), result: $('result').value.trim().slice(0, 700),
+      metric: $('metric').value.trim().slice(0, 80), link: safeLink($('link').value.trim()), fb: $('fb').value.trim().slice(0, 240), skills: pickSkills.slice() };
+    if (!w.title) return;
+    if (editing) { var i = S.entries.findIndex(function (x) { return x.id === editing; }); var old = S.entries[i]; w.id = old.id; w.created = old.created; w.star = old.star; w.sample = old.sample; S.entries[i] = w; }
+    else { w.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); w.created = Date.now(); w.star = false; S.entries.push(w); }
+    if (store()) toast(editing ? 'Entry updated' : (w.result ? 'Saved' : 'Saved. Add what changed when you know it.'));
+    reset(); list(); banners();
+  });
+
+  // List
+  ['q', 'fskill', 'fother'].forEach(function (id) { $(id).addEventListener(id === 'q' ? 'input' : 'change', list); });
+  function list() {
+    var q = $('q').value.trim().toLowerCase(), sk = $('fskill').value, o = $('fother').value;
+    var shown = sorted(S.entries).filter(function (w) {
+      if (sk && (w.skills || []).indexOf(sk) < 0) return false;
+      if (o === 'star' && !w.star) return false; if (o === 'nometric' && w.metric) return false; if (o === 'noresult' && w.result) return false;
+      return !q || [w.title, w.result, w.metric, w.fb, (w.skills || []).join(' ')].join(' ').toLowerCase().indexOf(q) > -1;
+    });
+    $('count').textContent = S.entries.length ? (shown.length === S.entries.length ? S.entries.length + ' entries' : shown.length + ' of ' + S.entries.length) : '';
+    if (!S.entries.length) { $('list').innerHTML = '<p class="empty">No entries yet. Add the last thing that went well at work, even a small one. Or load the examples from the Data tab to look around.</p>'; return; }
+    var html = '', last = '';
+    shown.forEach(function (w) {
+      var m = new Date(w.date + 'T12:00:00').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      if (m !== last) { html += '<p class="month">' + esc(m) + '</p>'; last = m; }
+      html += '<div class="entry"><h3><button class="star" data-a="star" data-id="' + w.id + '" aria-pressed="' + !!w.star + '" aria-label="Star this entry" title="Star for reviews">★</button><span>' + esc(w.title) + '</span></h3>' +
+        '<div class="meta"><span>' + esc(w.date) + '</span><span class="pill">' + esc(w.type) + '</span><span class="pill grey">' + esc(w.scope) + '</span>' + (w.skills || []).map(function (k) { return '<span class="pill grey">' + esc(k) + '</span>'; }).join('') +
+        (w.metric ? '<span>' + esc(w.metric) + '</span>' : '') + (w.link ? '<a href="' + esc(w.link) + '" target="_blank" rel="noopener">Proof</a>' : '') + (w.sample ? '<span class="pill warn">Example</span>' : '') + '</div>' +
+        (w.result ? '<p>' + esc(w.result) + '</p>' : '<p style="color:var(--warn)">No result yet. What changed?</p>') + (w.fb ? '<p><em>Feedback: ' + esc(w.fb) + '</em></p>' : '') +
+        '<div class="acts"><button class="btn small" data-a="edit" data-id="' + w.id + '">Edit</button><button class="btn small danger" data-a="del" data-id="' + w.id + '">Delete</button></div></div>';
+    });
+    $('list').innerHTML = html || '<p class="empty">No entries match.</p>';
+  }
+  $('list').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return; var id = b.getAttribute('data-id'), w = S.entries.filter(function (x) { return x.id === id; })[0]; if (!w) return;
+    var a = b.getAttribute('data-a');
+    if (a === 'star') { w.star = !w.star; store(); b.setAttribute('aria-pressed', w.star); return; }
+    if (a === 'edit') {
+      editing = id; $('date').value = w.date; $('type').value = w.type; $('scope').value = w.scope; $('title').value = w.title; $('result').value = w.result; $('metric').value = w.metric; $('link').value = w.link; $('fb').value = w.fb || '';
+      pickSkills = (w.skills || []).slice(); drawPick(); $('save').textContent = 'Save changes'; $('cancel').hidden = false; $('title').focus();
+      window.scrollTo({ top: $('form').getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' });
+    }
+    if (a === 'del') {
+      if (b.getAttribute('data-sure') !== '1') { b.setAttribute('data-sure', '1'); b.textContent = 'Tap again to delete'; return; }
+      S.entries = S.entries.filter(function (x) { return x.id !== id; }); store(); list(); banners(); toast('Entry deleted');
+    }
+  });
+
+  // Banners
+  function banners() {
+    var real = S.entries.filter(function (w) { return !w.sample; });
+    $('sample-b').hidden = !S.entries.some(function (w) { return w.sample; });
+    if (real.length) {
+      var lastD = sorted(real)[0].date, days = Math.floor((new Date(today()) - new Date(lastD)) / 864e5);
+      $('nudge').hidden = days < 14; $('nudge-t').textContent = days + ' days since your last entry. Anything from the last two weeks worth a line?';
+    } else $('nudge').hidden = true;
+  }
+  $('nudge-go').addEventListener('click', function () { show('log'); $('title').focus(); });
+  $('sample-clear').addEventListener('click', function () { S.entries = S.entries.filter(function (w) { return !w.sample; }); store(); list(); banners(); refresh(); toast('Examples removed'); });
+
+  // Dashboard
+  function inLast(months) { var from = monthsAgo(months); return S.entries.filter(function (w) { return w.date >= from; }); }
+  function hbars(el, rows, max, gapRule) {
+    $(el).innerHTML = rows.map(function (r) { return '<div class="hbar' + (gapRule && r[1] === 0 ? ' gap' : '') + '"><span>' + esc(r[0]) + '</span><span class="t"><i style="width:' + (max ? (r[1] / max * 100) : 0) + '%"></i></span><span class="n">' + r[1] + '</span></div>'; }).join('');
+  }
+  function dash() {
+    var all = S.entries, six = inLast(6), q90 = all.filter(function (w) { return w.date >= daysAgo(90); });
+    var lastD = all.length ? sorted(all)[0].date : null, days = lastD ? Math.floor((new Date(today()) - new Date(lastD)) / 864e5) : null;
+    // weeks in a row with an entry, counting back from this week
+    var weeks = {}; all.forEach(function (w) { var d = new Date(w.date + 'T12:00:00'); var mon = new Date(d); mon.setDate(d.getDate() - (d.getDay() + 6) % 7); weeks[iso(mon)] = 1; });
+    var streak = 0, cur = new Date(); cur.setDate(cur.getDate() - (cur.getDay() + 6) % 7);
+    if (!weeks[iso(cur)]) cur.setDate(cur.getDate() - 7);
+    while (weeks[iso(cur)]) { streak++; cur.setDate(cur.getDate() - 7); }
+    $('stats').innerHTML = [[all.length, 'entries in total'], [q90.length, 'in the last 90 days'], [days == null ? '–' : days, 'days since the last one'], [streak, streak === 1 ? 'week in a row' : 'weeks in a row']].map(function (s) { return '<div class="stat"><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join('');
+    var months = [], d = new Date(); d.setDate(1);
+    for (var i = 11; i >= 0; i--) { var m = new Date(d.getFullYear(), d.getMonth() - i, 1); var key = m.getFullYear() + '-' + pad(m.getMonth() + 1); months.push([key, m.toLocaleDateString('en-GB', { month: 'short' }), all.filter(function (w) { return w.date.slice(0, 7) === key; }).length]); }
+    var mx = Math.max.apply(null, months.map(function (x) { return x[2]; })) || 1;
+    $('months').innerHTML = months.map(function (x) { return '<div class="b">' + (x[2] ? '<em>' + x[2] + '</em>' : '') + '<i style="height:' + (x[2] / mx * 110) + 'px"></i><span>' + x[1] + '</span></div>'; }).join('');
+    var sk = S.skills.map(function (k) { return [k, six.filter(function (w) { return (w.skills || []).indexOf(k) > -1; }).length]; });
+    hbars('skillbars', sk, Math.max.apply(null, sk.map(function (x) { return x[1]; })) || 1, true);
+    var sc = SCOPES.map(function (k) { return [k, six.filter(function (w) { return w.scope === k; }).length]; });
+    hbars('scopebars', sc, Math.max.apply(null, sc.map(function (x) { return x[1]; })) || 1, false);
+    var n = all.length || 1, withR = all.filter(function (w) { return w.result; }).length, withM = all.filter(function (w) { return w.metric; }).length, withP = all.filter(function (w) { return w.link; }).length, withS = all.filter(function (w) { return (w.skills || []).length; }).length;
+    hbars('quality', [['Has a result', withR], ['Has a number', withM], ['Has proof', withP], ['Has a skill', withS]].map(function (r) { return [r[0], r[1]]; }), n, false);
+    $('quality').insertAdjacentHTML('beforeend', '<p class="note">Out of ' + all.length + ' entries. Use the filter "Missing a number" on the Journal tab to fix the weakest ones.</p>');
+  }
+
+  // Review builder
+  function periods() {
+    var o = [['3m', 'Last 3 months'], ['6m', 'Last 6 months'], ['12m', 'Last 12 months']], y = new Date().getFullYear(), qs = {};
+    S.entries.forEach(function (w) { qs[quarter(w.date)] = 1; });
+    Object.keys(qs).sort().reverse().forEach(function (k) { o.push(['q:' + k, k]); });
+    o.push(['y:' + y, 'Year ' + y], ['all', 'Everything']);
+    var cur = $('period').value || '6m';
+    $('period').innerHTML = o.map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === cur ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('');
+  }
+  function picked() {
+    var p = $('period').value, only = $('only').value;
+    return sorted(S.entries).filter(function (w) {
+      if (only === 'star' && !w.star) return false;
+      if (p === 'all') return true; if (/^\d+m$/.test(p)) return w.date >= monthsAgo(parseInt(p, 10));
+      if (p.indexOf('q:') === 0) return quarter(w.date) === p.slice(2); if (p.indexOf('y:') === 0) return w.date.slice(0, 4) === p.slice(2);
+      return true;
+    });
+  }
+  function line(w, withDate) { var s = '- ' + cap(w.title); if (w.result) s += ': ' + lower1(w.result); if (w.metric) s += ' (' + w.metric + ')'; if (withDate) s += ' [' + w.date + ']'; return s; }
+  function draft() {
+    periods();
+    var list = picked(), f = $('fmt').value, label = $('period').options[$('period').selectedIndex].text, out = [];
+    if (!list.length) { $('draft').textContent = 'No entries in this period yet.'; $('dcount').textContent = ''; return ''; }
+    if (f === 'review') {
+      out.push('# Self-review: ' + label, '');
+      S.skills.forEach(function (k) { var g = list.filter(function (w) { return (w.skills || []).indexOf(k) > -1; }); if (g.length) { out.push('## ' + k, ''); g.forEach(function (w) { out.push(line(w, true)); }); out.push(''); } });
+      var none = list.filter(function (w) { return !(w.skills || []).length; }); if (none.length) { out.push('## Other', ''); none.forEach(function (w) { out.push(line(w, true)); }); out.push(''); }
+      var gaps = S.skills.filter(function (k) { return !list.some(function (w) { return (w.skills || []).indexOf(k) > -1; }); });
+      if (gaps.length) out.push('## Where I want to grow', '', 'No examples this period for: ' + gaps.join(', ') + '. [Your plan for the next period]', '');
+      var fb = list.filter(function (w) { return w.fb; }); if (fb.length) { out.push('## Feedback received', ''); fb.forEach(function (w) { out.push('- ' + cap(w.fb) + ' (' + w.date + ')'); }); }
+    } else if (f === 'type') {
+      out.push('# Summary: ' + label, '');
+      TYPES.forEach(function (t) { var g = list.filter(function (w) { return w.type === t; }); if (g.length) { out.push('## ' + t + ' (' + g.length + ')', ''); g.forEach(function (w) { out.push(line(w, false)); }); out.push(''); } });
+    } else if (f === 'cv') {
+      var ranked = list.slice().sort(function (a, b) { return score(b) - score(a); }).slice(0, 8);
+      out.push('CV bullets, strongest first (' + label + '). Edit them down to one line each:', '');
+      ranked.forEach(function (w) { var s = '- ' + cap(w.title); if (w.metric) s += ', ' + lower1(w.metric); else if (w.result) s += ', ' + lower1(w.result.split(/[.;]/)[0]); out.push(s); });
+      out.push('', 'Ranked by: starred, has a number, has a result, reach beyond your team.');
+    } else {
+      out.push('# Brag document: ' + label, '', '## Highlights', '');
+      list.filter(function (w) { return w.star; }).slice(0, 5).forEach(function (w) { out.push(line(w, true)); });
+      if (!list.some(function (w) { return w.star; })) out.push('[Star your best entries to fill this section]');
+      out.push('', '## By quarter', ''); var q = '';
+      list.forEach(function (w) { var k = quarter(w.date); if (k !== q) { out.push('', '### ' + k); q = k; } out.push(line(w, false)); });
+    }
+    var t = out.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+    $('draft').textContent = t; $('dcount').textContent = list.length + ' entries used';
+    return t;
+  }
+  function score(w) { return (w.star ? 4 : 0) + (w.metric ? 3 : 0) + (w.result ? 2 : 0) + (w.scope !== 'My team' ? 1 : 0); }
+  ['period', 'fmt', 'only'].forEach(function (id) { $(id).addEventListener('change', draft); });
+  function download(name, text, type) { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  $('copy').addEventListener('click', function () { var t = draft(); if (!t) return; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { toast('Copied'); }, function () { toast('Select the text and copy it'); }); });
+  $('dl').addEventListener('click', function () { var t = draft(); if (t) download('impact-' + $('fmt').value + '-' + today() + '.md', t, 'text/markdown'); });
+
+  // Data
+  function dataView() { $('skills-edit').value = S.skills.join('\n'); $('lastbk').textContent = S.lastBackup ? 'Last backup: ' + S.lastBackup + '.' : 'No backup downloaded from this browser yet.'; }
+  $('backup').addEventListener('click', function () { download('impact-journal-backup-' + today() + '.json', JSON.stringify({ app: 'impact-journal', version: 1, entries: S.entries, skills: S.skills }, null, 1), 'application/json'); S.lastBackup = today(); store(); dataView(); });
+  $('csv').addEventListener('click', function () {
+    var cols = ['date', 'title', 'result', 'metric', 'type', 'scope', 'skills', 'fb', 'link', 'star'];
+    var rows = [cols.join(',')].concat(sorted(S.entries).map(function (w) { return cols.map(function (c) { var v = c === 'skills' ? (w.skills || []).join('; ') : w[c]; return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(','); }));
+    download('impact-journal-' + today() + '.csv', rows.join('\n'), 'text/csv');
+  });
+  $('restore').addEventListener('change', function () {
+    var f = this.files[0]; if (!f) return; var r = new FileReader();
+    r.onload = function () {
+      try {
+        var v = JSON.parse(r.result), arr = Array.isArray(v) ? v : v.entries; if (!Array.isArray(arr)) throw 0;
+        var have = {}; S.entries.forEach(function (w) { have[w.id] = 1; }); var added = 0;
+        arr.forEach(function (w) {
+          if (!w || !w.title || !w.date || have[w.id]) return;
+          S.entries.push({ id: String(w.id || Date.now().toString(36) + added), created: +w.created || Date.now(), date: String(w.date).slice(0, 10), title: String(w.title).slice(0, 160), result: String(w.result || w.impact || '').slice(0, 700),
+            metric: String(w.metric || '').slice(0, 80), link: safeLink(w.link), type: TYPES.indexOf(w.type) > -1 ? w.type : 'Delivery', scope: SCOPES.indexOf(w.scope) > -1 ? w.scope : 'My team',
+            skills: Array.isArray(w.skills) ? w.skills.map(String).slice(0, 10) : [], fb: String(w.fb || '').slice(0, 240), star: !!w.star }); added++;
+        });
+        if (v && Array.isArray(v.skills)) v.skills.forEach(function (k) { if (S.skills.indexOf(k) < 0 && S.skills.length < 15) S.skills.push(String(k).slice(0, 30)); });
+        store(); refresh(); toast(added + ' entries restored');
+      } catch (e) { toast('That file is not an Impact Journal backup'); }
+    };
+    r.readAsText(f); this.value = '';
+  });
+  $('skills-save').addEventListener('click', function () {
+    var seen = {}, k = $('skills-edit').value.split('\n').map(function (s) { return s.trim().slice(0, 30); }).filter(function (s) { if (!s || seen[s.toLowerCase()]) return false; seen[s.toLowerCase()] = 1; return true; }).slice(0, 15);
+    if (!k.length) { toast('Keep at least one skill'); return; } S.skills = k; store(); drawPick(); toast('Skills saved');
+  });
+  $('wipe').addEventListener('click', function () {
+    if (this.getAttribute('data-sure') !== '1') { this.setAttribute('data-sure', '1'); this.textContent = 'Tap again: this cannot be undone'; return; }
+    S = { entries: [], skills: S.skills }; store(); this.removeAttribute('data-sure'); this.textContent = 'Delete everything'; refresh(); toast('Everything deleted');
+  });
+  $('sample').addEventListener('click', function () {
+    if (S.entries.some(function (w) { return w.sample; })) { toast('Examples are already loaded'); return; }
+    var E = [
+      [8, 'Shipped saved searches to all users', 'Repeat visitors no longer rebuild filters each visit', '[x]% of weekly users saved a search', 'Delivery', 'Customers', ['Execution'], true],
+      [21, 'Ran 8 interviews with churned customers', 'Found that setup time, not price, was the main reason for leaving', '', 'Customer', 'My team', ['Discovery'], true],
+      [35, 'Wrote the pricing page test plan with finance', 'Finance agreed the success measure before the test, not after', '', 'Revenue or cost', 'Other teams', ['Stakeholders', 'Data'], false],
+      [48, 'Cut the weekly status meeting to a written update', 'Team got back about an hour a week', '1 meeting removed', 'Team', 'My team', ['Leadership'], false],
+      [63, 'Fixed search returning no results for part numbers', 'Fewer customers hit a dead end on the most common search type', '[x]% fewer empty searches', 'Quality', 'Customers', ['Data', 'Execution'], true],
+      [77, 'Presented the roadmap tradeoffs at the all-hands', 'Sales stopped asking for the deprioritised feature', '', 'Recognition', 'Whole company', ['Communication', 'Strategy'], false],
+      [92, 'Mentored a new associate PM through their first launch', 'They ran the next launch without help', '', 'Team', 'My team', ['Leadership'], false],
+      [105, 'Defined the north star metric with the data team', 'Three teams now report against the same number', '', 'Data', 'Other teams', ['Strategy', 'Data'], true],
+      [120, 'Killed a feature with low use after a 2 week test', 'Freed a developer for the checkout work', '', 'Revenue or cost', 'My team', ['Strategy'], false],
+      [140, 'Wrote the API changelog process with engineering', 'Partners stopped finding out about changes from errors', '', 'Customer', 'Customers', ['Execution', 'Communication'], false],
+      [158, 'Finished the SQL course and rebuilt my weekly report', 'Report now refreshes itself instead of taking an hour', '', 'Learning', 'My team', ['Data'], false],
+      [175, 'Got the support team a seat in sprint review', 'Bugs from support now reach the backlog in days, not weeks', '', 'Team', 'Other teams', ['Stakeholders'], false],
+      [200, 'Launched the mobile reorder button', 'Most used new feature of the quarter', '[x] reorders a week', 'Delivery', 'Customers', ['Execution'], false],
+      [240, 'Ran the first pricing experiment', '', '', 'Revenue or cost', 'Customers', ['Data'], false]
+    ];
+    E.forEach(function (x, i) { S.entries.push({ id: 'ex' + i, created: Date.now() - i, date: daysAgo(x[0]), title: x[1], result: x[2], metric: x[3], type: x[4], scope: x[5], skills: x[6], fb: i === 1 ? 'Head of sales said it changed how they pitch' : '', link: '', star: x[7], sample: true }); });
+    store(); refresh(); toast('14 example entries loaded'); show('dash');
+  });
+
+  function refresh() { drawPick(); list(); banners(); var v = (location.hash || '#log').slice(1); if (v === 'dash') dash(); if (v === 'review') draft(); if (v === 'data') dataView(); }
+  reset(); list(); banners();
+  var start = (location.hash || '').slice(1); if (['dash', 'review', 'data'].indexOf(start) > -1) show(start);
+})();
+</script>
+</body>
+</html>
